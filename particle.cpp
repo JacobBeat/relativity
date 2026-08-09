@@ -2,7 +2,7 @@
 
 class Particle {
 public:
-  double mass;
-  vec3 position;
-  vec3 momentum;
+  double mass; // invariant/rest mass
+  vec2 position;
+  vec2 velocity;
 };
