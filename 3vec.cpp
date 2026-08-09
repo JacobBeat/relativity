@@ -1,6 +1,8 @@
 #include "3vec.hpp"
 #include <cmath>
 
+vec3::vec3(double x_, double y_, double t_) : x(x_), y(y_), t(t_) {}
+
 double vec3::lensq() {
   return ((std::pow(c, 2.0) * std::pow(t, 2.0)) - std::pow(x, 2.0) -
           std::pow(y, 2.0));
