@@ -1,3 +1,4 @@
+#include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <array>
 #include <vector>
@@ -49,6 +50,7 @@ int main() {
   glfwSwapInterval(1);
 
   while (!glfwWindowShouldClose(window)) {
+    glClear(GL_COLOR_CLEAR_VALUE);
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
