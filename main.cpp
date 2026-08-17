@@ -1,7 +1,9 @@
+#include "3vec.hpp"
 #include "shader.hpp"
 #include <GLFW/glfw3.h>
 #include <array>
 #include <cmath>
+#include <iostream>
 #include <vector>
 
 constexpr int screen_width = 800;
@@ -26,8 +28,8 @@ GLuint drawTriangle() {
   return vertex_array_object;
 }
 
-void drawCircle(float xPos, float yPos, float radius, int res) {
-  unsigned int vertex_array;
+void drawCircle(float xPos, float yPos, float radius, int res,
+                unsigned int &vertex_array) {
   glGenVertexArrays(1, &vertex_array);
   glBindVertexArray(vertex_array);
 
@@ -80,9 +82,46 @@ void processInput(GLFWwindow *window) {
   if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
-    drawCircle(0.5, 0.5, 0.1, 100);
+    // drawCircle(-1.0 + (2 * xpos / screen_width),
+    //            1.0 - (2 * ypos / screen_height), 0.1, 100);
   }
 }
+class Particle {
+  constexpr static int triangle_count = 50;
+  constexpr static float radius = 0.05;
+  GLuint VAO, VBO;
+  vec2 position;
+  vec2 velocity;
+  double mass;
+  double time; // local time
+  int vertexCount;
+
+  std::vector<float> Draw() {
+    std::vector<float> vertices;
+    vertices.push_back(position.x);
+    vertices.push_back(position.y);
+    vertices.push_back(0.0);
+    for (int i = 0; i < triangle_count - 1; i++) {
+      vertices.push_back(position.x);
+      vertices.push_back(position.y);
+      vertices.push_back(0.0);
+      vertices.push_back(position.x +
+                         radius * std::cos(2 * pi * i / (triangle_count)));
+      vertices.push_back(position.y +
+                         radius * std::sin(2 * pi * i / (triangle_count)));
+      vertices.push_back(0.0);
+
+      vertices.push_back(
+          position.x + radius * std::cos(2 * pi * (i + 1) / (triangle_count)));
+      vertices.push_back(
+          position.y + radius * std::sin(2 * pi * (i + 1) / (triangle_count)));
+      vertices.push_back(0.0);
+    }
+    return vertices;
+  }
+
+  void update(double dt) { position += (velocity * dt); }
+};
 
 int main() {
   if (!glfwInit()) {
