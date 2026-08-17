@@ -28,8 +28,8 @@ GLuint drawTriangle() {
   return vertex_array_object;
 }
 
-void drawCircle(float xPos, float yPos, float radius, int res,
-                unsigned int &vertex_array) {
+void drawCircle(float xPos, float yPos, float radius, int res) {
+  unsigned int vertex_array;
   glGenVertexArrays(1, &vertex_array);
   glBindVertexArray(vertex_array);
 
@@ -87,37 +87,20 @@ void processInput(GLFWwindow *window) {
   }
 }
 class Particle {
+public:
   constexpr static int triangle_count = 50;
   constexpr static float radius = 0.05;
-  GLuint VAO, VBO;
-  vec2 position;
-  vec2 velocity;
+  vec2 position = vec2(0.0, 0.0);
+  vec2 velocity = vec2(0.0, 0.0);
   double mass;
-  double time; // local time
-  int vertexCount;
+  double time = 0.0; // local time
 
-  std::vector<float> Draw() {
-    std::vector<float> vertices;
-    vertices.push_back(position.x);
-    vertices.push_back(position.y);
-    vertices.push_back(0.0);
-    for (int i = 0; i < triangle_count - 1; i++) {
-      vertices.push_back(position.x);
-      vertices.push_back(position.y);
-      vertices.push_back(0.0);
-      vertices.push_back(position.x +
-                         radius * std::cos(2 * pi * i / (triangle_count)));
-      vertices.push_back(position.y +
-                         radius * std::sin(2 * pi * i / (triangle_count)));
-      vertices.push_back(0.0);
+  void Draw() { drawCircle(position.x, position.y, radius, triangle_count); }
 
-      vertices.push_back(
-          position.x + radius * std::cos(2 * pi * (i + 1) / (triangle_count)));
-      vertices.push_back(
-          position.y + radius * std::sin(2 * pi * (i + 1) / (triangle_count)));
-      vertices.push_back(0.0);
-    }
-    return vertices;
+  Particle(double x, double y, double vx, double vy, double mass) {
+    this->position = vec2(x, y);
+    this->velocity = vec2(vx, vy);
+    this->mass = mass;
   }
 
   void update(double dt) { position += (velocity * dt); }
@@ -138,6 +121,10 @@ int main() {
     return -1;
   }
 
+  Particle particles[] = {Particle(0.0, 0.0, 0.0, 0.0, 2),
+                          Particle(0.0, 0.0, 0.1, 0.0, 2),
+                          Particle(0.2, 0.0, 0.0, 0.1, 2)};
+
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1);
   glewInit();
@@ -153,7 +140,10 @@ int main() {
     // glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shaderProgram);
-    drawCircle(0.0, 0.0, 0.1, 100);
+    for (Particle p : particles) {
+      p.Draw();
+      p.update(0.001);
+    }
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
