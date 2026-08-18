@@ -10,160 +10,10 @@ constexpr int screen_width = 800;
 constexpr int screen_height = 800;
 constexpr float pi = 3.14159265359;
 
-GLuint drawTriangle() {
-  float vertex_data[] = {-0.5, -0.5, 0.0, 0.5, -0.5, 0.0, 0.0, 0.5, 0.0};
-
-  unsigned int vertex_array_object;
-  glGenVertexArrays(1, &vertex_array_object);
-  glBindVertexArray(vertex_array_object);
-
-  unsigned int vertex_buffer_object;
-  glGenBuffers(1, &vertex_buffer_object);
-  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
-
-  glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), vertex_data, GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
-
-  return vertex_array_object;
-}
-class Circle {
-public:
-  unsigned int vertex_array;
-  unsigned int vertex_buffer;
-  unsigned int element_buffer;
-  float xPos, yPos, radius;
-  int res;
-
-  void genData() {
-    glGenVertexArrays(1, &vertex_array);
-    glBindVertexArray(vertex_array);
-
-    float vertices[3 * (res + 1)];
-    vertices[0] = (xPos);
-    vertices[1] = (yPos);
-    vertices[2] = 0.0;
-    for (int i = 0; i < res; i++) {
-      vertices[3 * (i + 1)] =
-          (xPos + radius * std::cos(2 * pi * i / (res))); // x coord
-      vertices[1 + 3 * (i + 1)] =
-          (yPos + radius * std::sin(2 * pi * i / (res))); // y coord
-      vertices[2 + 3 * (i + 1)] = 0.0;                    // z coord
-    }
-
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-
-    glBufferData(GL_ARRAY_BUFFER, 9 * res * sizeof(float), vertices,
-                 GL_STATIC_DRAW);
-
-    unsigned int index[3 * res];
-    for (int i = 0; i < res - 1; i++) {
-      index[3 * i] = 0;
-      index[1 + 3 * i] = 1 + i;
-      index[2 + 3 * i] = 2 + i;
-    }
-    index[3 * (res - 1)] = 0;
-    index[3 * (res - 1) + 1] = res;
-    index[3 * (res - 1) + 2] = 1;
-
-    glGenBuffers(1, &element_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * res * sizeof(unsigned int), index,
-                 GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                          (void *)0);
-    glEnableVertexAttribArray(0);
-  }
-
-  void Draw() {
-    glBindVertexArray(vertex_array);
-    glDrawElements(GL_TRIANGLES, 3 * res, GL_UNSIGNED_INT, 0);
-  }
-
-  Circle(float xCen, float yCen, float rad, int tri_count) {
-    this->xPos = xCen;
-    this->yPos = yCen;
-    this->radius = rad;
-    this->res = tri_count;
-  }
-
-  static void drawCircle(float xPos, float yPos, float radius, int res) {
-    unsigned int vertex_array;
-    glGenVertexArrays(1, &vertex_array);
-    glBindVertexArray(vertex_array);
-
-    float vertices[3 * (res + 1)];
-    vertices[0] = (xPos);
-    vertices[1] = (yPos);
-    vertices[2] = 0.0;
-    for (int i = 0; i < res; i++) {
-      vertices[3 * (i + 1)] =
-          (xPos + radius * std::cos(2 * pi * i / (res))); // x coord
-      vertices[1 + 3 * (i + 1)] =
-          (yPos + radius * std::sin(2 * pi * i / (res))); // y coord
-      vertices[2 + 3 * (i + 1)] = 0.0;                    // z coord
-    }
-
-    unsigned int vertex_buffer;
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-
-    glBufferData(GL_ARRAY_BUFFER, 9 * res * sizeof(float), vertices,
-                 GL_STATIC_DRAW);
-
-    unsigned int index[3 * res];
-    for (int i = 0; i < res - 1; i++) {
-      index[3 * i] = 0;
-      index[1 + 3 * i] = 1 + i;
-      index[2 + 3 * i] = 2 + i;
-    }
-    index[3 * (res - 1)] = 0;
-    index[3 * (res - 1) + 1] = res;
-    index[3 * (res - 1) + 2] = 1;
-
-    unsigned int element_buffer;
-    glGenBuffers(1, &element_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * res * sizeof(unsigned int), index,
-                 GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                          (void *)0);
-    glEnableVertexAttribArray(0);
-
-    glBindVertexArray(vertex_array);
-    glDrawElements(GL_TRIANGLES, 3 * res, GL_UNSIGNED_INT, 0);
-  }
-};
-
 void bindVertexData(unsigned int &VAO, unsigned int &VBO, const float *vertices,
-                    int vertex_count) {
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
+                    int vertex_count);
+void processInput(GLFWwindow *window);
 
-  glBindVertexArray(VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(float), vertices,
-               GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
-  glBindVertexArray(0);
-}
-
-void processInput(GLFWwindow *window) {
-  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-    glfwSetWindowShouldClose(window, true);
-  }
-  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
-    // drawCircle(-1.0 + (2 * xpos / screen_width),
-    //            1.0 - (2 * ypos / screen_height), 0.1, 100);
-  }
-}
 class Particle {
 public:
   unsigned int VAO, VBO;
@@ -219,7 +69,6 @@ public:
                  vertices.data(), GL_STATIC_DRAW);
   }
 };
-
 int main() {
   if (!glfwInit()) {
     return -1;
@@ -270,4 +119,31 @@ int main() {
   glfwDestroyWindow(window);
   glfwTerminate();
   return 0;
+}
+
+void bindVertexData(unsigned int &VAO, unsigned int &VBO, const float *vertices,
+                    int vertex_count) {
+  glGenVertexArrays(1, &VAO);
+  glGenBuffers(1, &VBO);
+
+  glBindVertexArray(VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(float), vertices,
+               GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+  glBindVertexArray(0);
+}
+
+void processInput(GLFWwindow *window) {
+  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    glfwSetWindowShouldClose(window, true);
+  }
+  if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+  }
+  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+  }
 }
