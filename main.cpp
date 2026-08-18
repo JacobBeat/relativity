@@ -27,53 +27,116 @@ GLuint drawTriangle() {
 
   return vertex_array_object;
 }
-
-void drawCircle(float xPos, float yPos, float radius, int res) {
+class Circle {
+public:
   unsigned int vertex_array;
-  glGenVertexArrays(1, &vertex_array);
-  glBindVertexArray(vertex_array);
-
-  float vertices[3 * (res + 1)];
-  vertices[0] = (xPos);
-  vertices[1] = (yPos);
-  vertices[2] = 0.0;
-  for (int i = 0; i < res; i++) {
-    vertices[3 * (i + 1)] =
-        (xPos + radius * std::cos(2 * pi * i / (res))); // x coord
-    vertices[1 + 3 * (i + 1)] =
-        (yPos + radius * std::sin(2 * pi * i / (res))); // y coord
-    vertices[2 + 3 * (i + 1)] = 0.0;                    // z coord
-  }
-
   unsigned int vertex_buffer;
-  glGenBuffers(1, &vertex_buffer);
-  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-
-  glBufferData(GL_ARRAY_BUFFER, 9 * res * sizeof(float), vertices,
-               GL_STATIC_DRAW);
-
-  unsigned int index[3 * res];
-  for (int i = 0; i < res - 1; i++) {
-    index[3 * i] = 0;
-    index[1 + 3 * i] = 1 + i;
-    index[2 + 3 * i] = 2 + i;
-  }
-  index[3 * (res - 1)] = 0;
-  index[3 * (res - 1) + 1] = res;
-  index[3 * (res - 1) + 2] = 1;
-
   unsigned int element_buffer;
-  glGenBuffers(1, &element_buffer);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * res * sizeof(unsigned int), index,
-               GL_STATIC_DRAW);
+  float xPos, yPos, radius;
+  int res;
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
+  void genData() {
+    glGenVertexArrays(1, &vertex_array);
+    glBindVertexArray(vertex_array);
 
-  glBindVertexArray(vertex_array);
-  glDrawElements(GL_TRIANGLES, 3 * res, GL_UNSIGNED_INT, 0);
-}
+    float vertices[3 * (res + 1)];
+    vertices[0] = (xPos);
+    vertices[1] = (yPos);
+    vertices[2] = 0.0;
+    for (int i = 0; i < res; i++) {
+      vertices[3 * (i + 1)] =
+          (xPos + radius * std::cos(2 * pi * i / (res))); // x coord
+      vertices[1 + 3 * (i + 1)] =
+          (yPos + radius * std::sin(2 * pi * i / (res))); // y coord
+      vertices[2 + 3 * (i + 1)] = 0.0;                    // z coord
+    }
+
+    glGenBuffers(1, &vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+
+    glBufferData(GL_ARRAY_BUFFER, 9 * res * sizeof(float), vertices,
+                 GL_STATIC_DRAW);
+
+    unsigned int index[3 * res];
+    for (int i = 0; i < res - 1; i++) {
+      index[3 * i] = 0;
+      index[1 + 3 * i] = 1 + i;
+      index[2 + 3 * i] = 2 + i;
+    }
+    index[3 * (res - 1)] = 0;
+    index[3 * (res - 1) + 1] = res;
+    index[3 * (res - 1) + 2] = 1;
+
+    glGenBuffers(1, &element_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * res * sizeof(unsigned int), index,
+                 GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+                          (void *)0);
+    glEnableVertexAttribArray(0);
+  }
+
+  void Draw() {
+    glBindVertexArray(vertex_array);
+    glDrawElements(GL_TRIANGLES, 3 * res, GL_UNSIGNED_INT, 0);
+  }
+
+  Circle(float xCen, float yCen, float rad, int tri_count) {
+    this->xPos = xCen;
+    this->yPos = yCen;
+    this->radius = rad;
+    this->res = tri_count;
+  }
+
+  static void drawCircle(float xPos, float yPos, float radius, int res) {
+    unsigned int vertex_array;
+    glGenVertexArrays(1, &vertex_array);
+    glBindVertexArray(vertex_array);
+
+    float vertices[3 * (res + 1)];
+    vertices[0] = (xPos);
+    vertices[1] = (yPos);
+    vertices[2] = 0.0;
+    for (int i = 0; i < res; i++) {
+      vertices[3 * (i + 1)] =
+          (xPos + radius * std::cos(2 * pi * i / (res))); // x coord
+      vertices[1 + 3 * (i + 1)] =
+          (yPos + radius * std::sin(2 * pi * i / (res))); // y coord
+      vertices[2 + 3 * (i + 1)] = 0.0;                    // z coord
+    }
+
+    unsigned int vertex_buffer;
+    glGenBuffers(1, &vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+
+    glBufferData(GL_ARRAY_BUFFER, 9 * res * sizeof(float), vertices,
+                 GL_STATIC_DRAW);
+
+    unsigned int index[3 * res];
+    for (int i = 0; i < res - 1; i++) {
+      index[3 * i] = 0;
+      index[1 + 3 * i] = 1 + i;
+      index[2 + 3 * i] = 2 + i;
+    }
+    index[3 * (res - 1)] = 0;
+    index[3 * (res - 1) + 1] = res;
+    index[3 * (res - 1) + 2] = 1;
+
+    unsigned int element_buffer;
+    glGenBuffers(1, &element_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * res * sizeof(unsigned int), index,
+                 GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+                          (void *)0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(vertex_array);
+    glDrawElements(GL_TRIANGLES, 3 * res, GL_UNSIGNED_INT, 0);
+  }
+};
 
 void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -94,16 +157,25 @@ public:
   vec2 velocity = vec2(0.0, 0.0);
   double mass;
   double time = 0.0; // local time
+  Circle render = Circle(position.x, position.y, radius, triangle_count);
 
-  void Draw() { drawCircle(position.x, position.y, radius, triangle_count); }
+  void Draw() {
+    Circle::drawCircle(position.x, position.y, radius, triangle_count);
+  }
 
   Particle(double x, double y, double vx, double vy, double mass) {
     this->position = vec2(x, y);
     this->velocity = vec2(vx, vy);
     this->mass = mass;
+    render = Circle(position.x, position.y, radius, triangle_count);
   }
 
-  void update(double dt) { position += (velocity * dt); }
+  void update(double dt) {
+    position += (velocity * dt);
+    render.xPos = position.x;
+    render.yPos = position.y;
+    std::cout << position.x << position.y << velocity.x << velocity.y << "\n";
+  }
 };
 
 int main() {
@@ -136,13 +208,13 @@ int main() {
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
 
-    // glClearColor(0.0, 0.0, 0.0, 1.0);
-    // glClear(GL_COLOR_BUFFER_BIT);
+    //    glClearColor(0.0, 0.0, 0.0, 1.0);
+    //    glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shaderProgram);
-    for (Particle p : particles) {
+    for (Particle &p : particles) {
       p.Draw();
-      p.update(0.001);
+      p.update(0.01);
     }
     glfwSwapBuffers(window);
     glfwPollEvents();
