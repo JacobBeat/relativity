@@ -10,6 +10,8 @@ constexpr int screen_width = 800;
 constexpr int screen_height = 800;
 constexpr float pi = 3.14159265359;
 
+bool pause = false;
+
 void bindVertexData(unsigned int &VAO, unsigned int &VBO, const float *vertices,
                     int vertex_count);
 void processInput(GLFWwindow *window);
@@ -18,7 +20,7 @@ class Particle {
 public:
   unsigned int VAO, VBO;
   constexpr static int triangle_count = 50;
-  constexpr static float radius = 0.05;
+  constexpr static float radius = 0.02;
   int vertex_count;
 
   vec2 position = vec2(0.0, 0.0);
@@ -62,13 +64,46 @@ public:
 
   void update(double dt) {
     position += (velocity * dt) / 5;
+    time += dt;
 
     std::vector<float> vertices = genVertexData();
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float),
                  vertices.data(), GL_STATIC_DRAW);
   }
+
+  void print() {
+    std::cout << "\033[K" << "Position (" << position.x << "," << position.y
+              << ")\n";
+    std::cout << "\033[K" << "Velocity (" << velocity.x << "," << velocity.y
+              << ")\n";
+    std::cout << "\033[K" << "Time " << time << "\n";
+    std::cout << std::flush;
+  }
 };
+
+class System {
+public:
+  std::vector<Particle> particles;
+  vec2 origin_position = vec2(0.0, 0.0);
+  vec2 origin_velocity = vec2(0.0, 0.0);
+  double time = 0.0;
+
+  void lorentz_transform(vec2 transformed_velocity) {}
+
+  void update(double dt) {}
+
+  void printInfo() {
+    for (int i = 0; i < particles.size(); i++) {
+      std::cout << "\033[K" << "Particle: " << i + 1 << "\n";
+      particles[i].print();
+    }
+    std::cout << "\033[" << 4 * particles.size() << "A";
+  }
+
+  System(std::vector<Particle> &p_system) { this->particles = p_system; }
+};
+
 int main() {
   if (!glfwInit()) {
     return -1;
@@ -90,10 +125,12 @@ int main() {
   glViewport(0, 0, screen_width, screen_height);
 
   GLuint shaderProgram = createShaders();
-  Particle particles[] = {Particle(0.0, 0.0, 0.0, 0.0, 2),
-                          Particle(0.0, 0.0, 1.0, 0.0, 2),
-                          Particle(1.0, 0.0, 0.0, 1.0, 2)};
 
+  std::vector<Particle> particles;
+  particles.push_back(Particle(0.0, 0.0, 0.0, 0.0, 2));
+  particles.push_back(Particle(0.0, 1.0, 1.0, 0.0, 2));
+  particles.push_back(Particle(1.0, 0.0, 0.0, 1.0, 2));
+  System sys = System(particles);
   float lastFrame = 0;
   float dt;
 
@@ -107,11 +144,14 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shaderProgram);
-    for (Particle &p : particles) {
+    for (Particle &p : sys.particles) {
       glBindVertexArray(p.VAO);
       glDrawArrays(GL_TRIANGLES, 0, p.vertex_count / 3);
-      p.update(dt);
+      if (!pause) {
+        p.update(dt);
+      }
     }
+    sys.printInfo();
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
@@ -140,7 +180,8 @@ void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
   }
-  if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+    pause = !pause;
   }
   if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
     double xpos, ypos;
