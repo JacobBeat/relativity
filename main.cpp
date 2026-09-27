@@ -12,6 +12,8 @@ constexpr float pi = 3.14159265359;
 
 bool pause = false;
 
+void keyCallback(GLFWwindow *window, int key, int scancode, int action,
+                 int mods);
 void bindVertexData(unsigned int &VAO, unsigned int &VBO, const float *vertices,
                     int vertex_count);
 void processInput(GLFWwindow *window);
@@ -19,6 +21,7 @@ void processInput(GLFWwindow *window);
 class Particle {
 public:
   unsigned int VAO, VBO;
+  constexpr static float viewport_size = 20;
   constexpr static int triangle_count = 50;
   constexpr static float radius = 0.02;
   int vertex_count;
@@ -33,19 +36,19 @@ public:
   std::vector<float> genVertexData() {
     std::vector<float> vertices;
     for (int i = 0; i < triangle_count; i++) {
-      vertices.push_back(position.x / 5);
-      vertices.push_back(position.y / 5);
+      vertices.push_back(position.x / viewport_size);
+      vertices.push_back(position.y / viewport_size);
       vertices.push_back(0.0);
 
-      vertices.push_back(position.x / 5 +
+      vertices.push_back(position.x / viewport_size +
                          radius * std::cos(2 * pi * i / triangle_count));
-      vertices.push_back(position.y / 5 +
+      vertices.push_back(position.y / viewport_size +
                          radius * std::sin(2 * pi * i / triangle_count));
       vertices.push_back(0.0);
 
-      vertices.push_back(position.x / 5 +
+      vertices.push_back(position.x / viewport_size +
                          radius * std::cos(2 * pi * (i + 1) / triangle_count));
-      vertices.push_back(position.y / 5 +
+      vertices.push_back(position.y / viewport_size +
                          radius * std::sin(2 * pi * (i + 1) / triangle_count));
       vertices.push_back(0.0);
     }
@@ -63,7 +66,7 @@ public:
   }
 
   void update(double dt) {
-    position += (velocity * dt) / 5;
+    position += (velocity * dt);
     time += dt;
 
     std::vector<float> vertices = genVertexData();
@@ -82,16 +85,40 @@ public:
   }
 };
 
-class System {
+class Frame {
 public:
   std::vector<Particle> particles;
   vec2 origin_position = vec2(0.0, 0.0);
   vec2 origin_velocity = vec2(0.0, 0.0);
   double time = 0.0;
 
-  void lorentz_transform(vec2 transformed_velocity) {}
+  // Transforms not along x can be done by rotating such that x is in direction
+  // of boost
+  void lorentz_transform(double x_velocity) {
+    double beta = x_velocity / vec3::c;
+    double gamma = 1 / std::sqrt(1 - (beta * beta));
+    for (Particle &p : particles) {
+      double new_x = gamma * (p.position.x - x_velocity * p.time);
+      double new_t = gamma * (p.time - (beta / vec3::c) * p.position.x);
+      double new_vx = (p.velocity.x - x_velocity) /
+                      (1 - (p.velocity.x * x_velocity) / (vec3::c * vec3::c));
+      double new_vy =
+          p.velocity.y /
+          (gamma * (1 - (p.velocity.x * x_velocity) / (vec3::c * vec3::c)));
+      p.position.x = new_x;
+      p.time = new_t;
+      p.velocity.x = new_vx;
+      p.velocity.y = new_vy;
+    }
+  }
+  // Should use a general 2d transform but this is a quick solution
+  void obj_Inertial_Frame(Particle &p) { lorentz_transform(p.velocity.x); }
 
-  void update(double dt) {}
+  void update(double dt) {
+    for (Particle &p : particles) {
+      p.update(dt);
+    }
+  }
 
   void printInfo() {
     for (int i = 0; i < particles.size(); i++) {
@@ -101,7 +128,9 @@ public:
     std::cout << "\033[" << 4 * particles.size() << "A";
   }
 
-  System(std::vector<Particle> &p_system) { this->particles = p_system; }
+  void addParticle(const Particle &p) { particles.push_back(p); }
+
+  Frame(const std::vector<Particle> &p_system) { this->particles = p_system; }
 };
 
 int main() {
@@ -118,6 +147,7 @@ int main() {
     glfwTerminate();
     return -1;
   }
+  glfwSetKeyCallback(window, keyCallback);
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1);
   glewInit();
@@ -127,10 +157,15 @@ int main() {
   GLuint shaderProgram = createShaders();
 
   std::vector<Particle> particles;
-  particles.push_back(Particle(0.0, 0.0, 0.0, 0.0, 2));
-  particles.push_back(Particle(0.0, 1.0, 1.0, 0.0, 2));
-  particles.push_back(Particle(1.0, 0.0, 0.0, 1.0, 2));
-  System sys = System(particles);
+  Frame sys = Frame(particles);
+  sys.addParticle(Particle(0.0, 0.0, 0.0, 0.0, 2));
+  sys.addParticle(Particle(0.0, 1.0, -0.2, 0.0, 2));
+  sys.addParticle(Particle(0.0, 1.5, -0.5, 0.0, 2));
+  sys.addParticle(Particle(0.0, 2.0, -0.8, 0.0, 2));
+  sys.addParticle(Particle(0.0, 2.5, -0.9, 0.0, 2));
+  sys.addParticle(Particle(0.0, 3.0, -0.99, 0.0, 2));
+  sys.addParticle(Particle(1.0, 0.0, 0.0, 0.2, 2));
+
   float lastFrame = 0;
   float dt;
 
@@ -138,7 +173,25 @@ int main() {
     float currentFrame = glfwGetTime();
     dt = currentFrame - lastFrame;
     lastFrame = currentFrame;
-    processInput(window);
+    if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
+      sys.lorentz_transform(sys.particles[0].velocity.x);
+    }
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+      sys.lorentz_transform(sys.particles[1].velocity.x);
+    }
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+      sys.lorentz_transform(sys.particles[2].velocity.x);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
+      sys.lorentz_transform(sys.particles[3].velocity.x);
+    }
+    if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) {
+      sys.lorentz_transform(sys.particles[4].velocity.x);
+    }
+    if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS) {
+      sys.lorentz_transform(sys.particles[5].velocity.x);
+    }
 
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -176,7 +229,8 @@ void bindVertexData(unsigned int &VAO, unsigned int &VBO, const float *vertices,
   glBindVertexArray(0);
 }
 
-void processInput(GLFWwindow *window) {
+void keyCallback(GLFWwindow *window, int key, int scancode, int action,
+                 int mods) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
   }

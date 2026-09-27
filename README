@@ -1,0 +1,16 @@
+Compilation: Depends on glfw, glew, opengl. makefile should work, however I have only tested it on my machine (fedora linux) so ymmv.
+
+
+This is a simulation of relativistic kinematics, use keys 0-5 to switch between the rest frames of the 5 horizontally moving particles, 0 is the one initially at rest and then numbers are in order of increasing initial velocity, currently can't switch into frame of vertical one but might add that later. 
+
+This is a pet project I made to teach myself special relativity and c++, if you come across this feel free to fork/extend the code however you want.
+
+Things I might add later:
+  - Keep track of the proper time each particle experiences
+  - Show mass and energy of each particle in each frame
+  - General 2d lorentz transforms
+  - 3d rendering
+  - Simulation of (relativistic) electrodynamics
+  - Simulation of collisions
+
+No guarantees, I'm in college right now and pretty busy so will add those whenever I have time/interest.
